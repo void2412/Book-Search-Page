@@ -4,10 +4,6 @@ const {signToken} = require('../utils/auth')
 
 const resolver = {
 	Query: {
-		user: async (parent, {userId}) =>{
-			return User.findOne({_id: userId})
-		},
-
 		me: async (parent, args, context) =>{
 			if (context.user){
 				return User.findOne({_id: context.user._id})
@@ -24,11 +20,11 @@ const resolver = {
 			return {token, user}
 		},
 
-		login: async (parent, {username, email, password}) => {
-			const user = await User.findOne( {$or: [{email:email}, {username:username}] } )
+		login: async (parent, {email, password}) => {
+			const user = await User.findOne({email:email})
 
 			if (!user){
-				throw new AuthenticationError("No user with this email or username")
+				throw new AuthenticationError("No user with this email")
 			}
 
 			const checkPw = await User.isCorrectPassword(password)
@@ -41,10 +37,10 @@ const resolver = {
 			return {token, user}
 		},
 
-		addBook: async (parent, {user, book}, context) => {
+		saveBook: async (parent, book, context) => {
 			if(context.user){
 				const updatedUser = await User.findOneAndUpdate(
-					{ _id: user._id },
+					{ _id: context.user._id },
 					{ $addToSet: { savedBooks: book } },
 					{ new: true, runValidators: true }
 				  );
@@ -55,11 +51,11 @@ const resolver = {
 			throw new AuthenticationError("You must be logged in")
 		},
 
-		removeBook: async (parent, {user, params}, context) => {
+		removeBook: async (parent, bookId, context) => {
 			if(context.user){
 				const updatedUser = await User.findOneAndUpdate(
-					{ _id: user._id },
-					{ $pull: { savedBooks: { bookId: params.bookId } } },
+					{ _id: context.user._id },
+					{ $pull: { savedBooks: { bookId: bookId } } },
 					{ new: true }
 				  )
 				return updatedUser
