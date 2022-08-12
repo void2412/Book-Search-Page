@@ -24,11 +24,11 @@ const resolver = {
 			return {token, user}
 		},
 
-		login: async (parent, {email, password}) => {
-			const user = await User.findOne({ email })
+		login: async (parent, {username, email, password}) => {
+			const user = await User.findOne( {$or: [{email:email}, {username:username}] } )
 
 			if (!user){
-				throw new AuthenticationError("No user with this email")
+				throw new AuthenticationError("No user with this email or username")
 			}
 
 			const checkPw = await User.isCorrectPassword(password)
